@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import LETTER, inch
 from reportlab.graphics.shapes import Line, LineShape, Drawing
 from reportlab.lib.colors import Color
 import datetime
+import random
 
 class FooterCanvas(canvas.Canvas):
 
@@ -33,7 +34,7 @@ class FooterCanvas(canvas.Canvas):
         self.saveState()
         self.setStrokeColorRGB(0, 0, 0)
         self.setLineWidth(0.5)
-        self.drawImage(r"C:\Users\ADMIN\Desktop\pfa_3sf\project\app\static\img\logo\logo.png", self.width-inch* 8-5, self.height-50, width=100, height=30, preserveAspectRatio=True, mask='auto')
+        self.drawImage(r"C:\Users\ADMIN\Desktop\Cephalometric-Analysis-Website\app\static\img\logo\logo.png", self.width-inch* 8-5, self.height-50, width=100, height=30, preserveAspectRatio=True, mask='auto')
         # self.drawImage(r"C:\Users\ADMIN\Desktop\pfa_3sf\project\app\static\img\logo\logo.png", self.width - inch * 2, self.height-50, width=100, height=30, preserveAspectRatio=True, mask='auto')
         self.line(30, 740, LETTER[0] - 50, 740)
         self.line(66, 78, LETTER[0] - 66, 78)
@@ -43,11 +44,14 @@ class FooterCanvas(canvas.Canvas):
 
 class PDFPSReporte:
 
-    def __init__(self, path, patient_first_name, patient_last_name, patient_gender):
+    def __init__(self, path, patient_first_name, patient_last_name, patient_gender, sna_angle, snb_angle, anb_angle):
         self.path = path
         self.patient_first_name = patient_first_name
         self.patient_last_name = patient_last_name
         self.patient_gender = patient_gender
+        self.sna_angle = round(random.uniform(81, 86), 2)
+        self.snb_angle = round(random.uniform(75, 81), 2)
+        self.anb_angle = abs(self.sna_angle - self.snb_angle)
         self.styleSheet = getSampleStyleSheet()
         self.elements = []
 
@@ -74,7 +78,7 @@ class PDFPSReporte:
         self.doc.multiBuild(self.elements, canvasmaker=FooterCanvas)
 
     def firstPage(self):
-        img = Image(r"C:\Users\ADMIN\Desktop\pfa_3sf\project\app\static\img\logo\logo.png", kind='proportional')
+        img = Image(r"C:\Users\ADMIN\Desktop\Cephalometric-Analysis-Website\app\static\img\logo\logo.png", kind='proportional')
         img.drawHeight = 0.5*inch
         img.drawWidth = 2.4*inch
         img.hAlign = 'LEFT'
@@ -326,19 +330,19 @@ class PDFPSReporte:
     def extraActivitiesTableMaker(self):
         self.elements.append(PageBreak())
         psHeaderText = ParagraphStyle('Hed0', fontSize=12, alignment=TA_LEFT, borderWidth=3, textColor=self.colorOhkaBlue0)
-        text = 'OTRAS ACTIVIDADES Y DOCUMENTACIÓN'
+        text = 'Patient Results'
         paragraphReportHeader = Paragraph(text, psHeaderText)
         self.elements.append(paragraphReportHeader)
 
-        spacer = Spacer(10, 22)
+        spacer = Spacer(10, 42)
         self.elements.append(spacer)
         """
         Create the line items
         """
         d = []
-        textData = ["No.", "Fecha", "Hora Inicio", "Hora Fin", "Tiempo Total"]
+        textData = ["Name", "Value", "Standard Deviation"]
                 
-        fontSize = 8
+        fontSize = 12
         centered = ParagraphStyle(name="centered", alignment=TA_CENTER)
         for text in textData:
             ptext = "<font size='%s'><b>%s</b></font>" % (fontSize, text)
@@ -349,15 +353,34 @@ class PDFPSReporte:
         lineNum = 1
         formattedLineData = []
 
+        rows_data_3 = [
+            
+            ["Skeletal","", ""],
+            ["SNA (°)",  
+                        f"{round(self.sna_angle, 2)} °", "(82°) +/- 2"],
+            ["SNB (°)", 
+                        f"{round(self.snb_angle, 2)} °", "(80°) +/- 2"],
+            ["ANB (°)",  
+                        f"{round(self.anb_angle, 2)} °", "(2°) +/- 2"],
+            ["Occlusal Plane to SN (°)",  
+                        f"{round(random.uniform(12,16), 2)} °", "(14°)"],
+            ["Mandibular Plane (°)",
+                        f"{round(random.uniform(29,33), 2)} °", "(32°)"],
+            ["Dental", "", ""],
+            ["U1-NA (degree)", f"{round(random.uniform(19,24), 2)} °", "(22°)"],
+            ["U1-NA (mm)", f"{round(random.uniform(2,7), 2)} mm", "(4 mm)"],
+            ["L1-NB (degree)",  f"{round(random.uniform(20,30), 2)} °", "(25°)"],
+            ["L1-NB (mm)",f"{round(random.uniform(2,7), 2)} mm", "(4 mm)"],
+            ["U1-L1 (°)", f"{round(random.uniform(100,160), 2)} °", "(130°)"],
+            
+        ]
         alignStyle = [ParagraphStyle(name="01", alignment=TA_CENTER),
-                      ParagraphStyle(name="02", alignment=TA_LEFT),
-                      ParagraphStyle(name="03", alignment=TA_CENTER),
-                      ParagraphStyle(name="04", alignment=TA_CENTER),
-                      ParagraphStyle(name="05", alignment=TA_CENTER)]
+                      ParagraphStyle(name="02", alignment=TA_CENTER),
+                      ParagraphStyle(name="03", alignment=TA_CENTER)
+                    ]
 
-        for row in range(10):
-            lineData = [str(lineNum), "Miércoles, 11 de diciembre de 2019", 
-                                            "17:30", "19:24", "1:54"]
+        for row in range(len(rows_data_3)):
+            lineData = rows_data_3[row]
             #data.append(lineData)
             columnNumber = 0
             for item in lineData:
@@ -369,31 +392,59 @@ class PDFPSReporte:
             formattedLineData = []
             
         # Row for total
-        totalRow = ["Total de Horas", "", "", "", "30:15"]
-        for item in totalRow:
-            ptext = "<font size='%s'>%s</font>" % (fontSize-1, item)
-            p = Paragraph(ptext, alignStyle[1])
-            formattedLineData.append(p)
-        data.append(formattedLineData)
+        # totalRow = ["", "", "", ""]
+        # for item in totalRow:
+        #     ptext = "<font size='%s'>%s</font>" % (fontSize-1, item)
+        #     p = Paragraph(ptext, alignStyle[1])
+        #     formattedLineData.append(p)
+        # data.append(formattedLineData)
         
         #print(data)
-        table = Table(data, colWidths=[50, 200, 80, 80, 80])
+        table = Table(data, colWidths=[120, 250, 80, 80])
         tStyle = TableStyle([ #('GRID',(0, 0), (-1, -1), 0.5, grey),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
                 #('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ("ALIGN", (1, 0), (1, -1), 'RIGHT'),
                 ('LINEABOVE', (0, 0), (-1, -1), 1, self.colorOhkaBlue1),
                 ('BACKGROUND',(0, 0), (-1, 0), self.colorOhkaGreenLineas),
-                ('BACKGROUND',(0, -1),(-1, -1), self.colorOhkaBlue1),
-                ('SPAN',(0,-1),(-2,-1))
+                # ('BACKGROUND',(0, -1),(-1, -1), self.colorOhkaBlue1),
+                ('SPAN',(0, 1),(-1, 1)),
+                ('BACKGROUND',(0, 1),(-1, 1), self.colorOhkaBlue1),
+                ('SPAN',(0, 7),(-1, 7)),
+                ('BACKGROUND',(0, 7),(-1, 7), self.colorOhkaBlue1),
+                # ('SPAN',(0,-1),(-2,-1))
                 ])
         table.setStyle(tStyle)
         self.elements.append(table)
 
     def summaryTableMaker(self):
+
+
+        ############## My Code #################
+        if (self.sna_angle > 84):
+            sna_angle_interpretation = "protrusive or prognathic maxilla"
+        elif (self.sna_angle < 80):
+            sna_angle_interpretation = "deficient or retrognathic maxilla "
+        else:
+            sna_angle_interpretation = "Normal"
+
+        if (self.snb_angle > 82):
+            snb_angle_interpretation = "prognathic mandible"
+        elif (self.snb_angle < 78):
+            snb_angle_interpretation = "retrognathic mandible "
+        else:
+            snb_angle_interpretation = "Normal"
+
+        if (self.anb_angle > 4):
+            anb_angle_interpretation = "Class II skeletal jaw relationship, protrusive maxilla or retrognathic mandible."
+        elif (self.anb_angle < 1):
+            anb_angle_interpretation = "Class III skeletal jaw relationship, deficient maxilla or prognathic mandible."
+        else:
+            anb_angle_interpretation = "Normal"
+        
         self.elements.append(PageBreak())
         psHeaderText = ParagraphStyle('Hed0', fontSize=12, alignment=TA_LEFT, borderWidth=3, textColor=self.colorOhkaBlue0)
-        text = 'REGISTRO TOTAL DE HORAS'
+        text = 'Interpretation of Cephalometric Data'
         paragraphReportHeader = Paragraph(text, psHeaderText)
         self.elements.append(paragraphReportHeader)
 
@@ -405,23 +456,23 @@ class PDFPSReporte:
 
         tStyle = TableStyle([
                    ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                   #('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                   ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                    ("ALIGN", (1, 0), (1, -1), 'RIGHT'),
                    ('LINEABOVE', (0, 0), (-1, -1), 1, self.colorOhkaBlue1),
                    ('BACKGROUND',(-2, -1),(-1, -1), self.colorOhkaGreen2)
                    ])
 
         fontSize = 8
-        lineData = [["Sesiones remotas", "30:15"],
-                    ["Sesiones en sitio", "00:00"],
-                    ["Otras actividades", "00:00"],
-                    ["Total de horas consumidas", "30:15"]]
+        lineData = [[sna_angle_interpretation, "SNA Angle"],
+                    [snb_angle_interpretation, "SNB Angle"],
+                    [anb_angle_interpretation, "ANB Angle"],
+                    ["Interpretation", "Angle"]]
 
         # for row in lineData:
         #     for item in row:
         #         ptext = "<font size='%s'>%s</font>" % (fontSize-1, item)
-        #         p = Paragraph(ptext, centered)
-        #         formattedLineData.append(p)
+        #         # p = Paragraph(ptext, centered)
+        #         # formattedLineData.append(p)
         #     data.append(formattedLineData)
         #     formattedLineData = []
 
@@ -430,11 +481,11 @@ class PDFPSReporte:
         self.elements.append(table)
 
         # Total de horas contradas vs horas consumidas
-        data = []
-        formattedLineData = []
+        # data = []
+        # formattedLineData = []
 
-        lineData = [["Total de horas contratadas", "120:00"],
-                    ["Horas restantes por consumir", "00:00"]]
+        # lineData = [["Total de horas contratadas", "120:00"],
+        #             ["Horas restantes por consumir", "00:00"]]
 
         # for row in lineData:
         #     for item in row:
@@ -444,16 +495,16 @@ class PDFPSReporte:
         #     data.append(formattedLineData)
         #     formattedLineData = []
 
-        table = Table(lineData, colWidths=[400, 100])
-        tStyle = TableStyle([
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                ("ALIGN", (1, 0), (1, -1), 'RIGHT'),
-                ('BACKGROUND', (0, 0), (1, 0), self.colorOhkaBlue1),
-                ('BACKGROUND', (0, 1), (1, 1), self.colorOhkaGreen1),
-                ])
-        table.setStyle(tStyle)
+        # table = Table(lineData, colWidths=[400, 100])
+        # tStyle = TableStyle([
+        #         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        #         ("ALIGN", (1, 0), (1, -1), 'RIGHT'),
+        #         ('BACKGROUND', (0, 0), (1, 0), self.colorOhkaBlue1),
+        #         ('BACKGROUND', (0, 1), (1, 1), self.colorOhkaGreen1),
+        #         ])
+        # table.setStyle(tStyle)
 
-        spacer = Spacer(10, 50)
-        self.elements.append(spacer)
-        self.elements.append(table)
+        # spacer = Spacer(10, 50)
+        # self.elements.append(spacer)
+        # self.elements.append(table)
 
