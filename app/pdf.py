@@ -1,12 +1,4 @@
-from reportlab.pdfgen import canvas
-from reportlab.platypus import (SimpleDocTemplate, Paragraph, PageBreak, Image, Spacer, Table, TableStyle)
-from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER, TA_JUSTIFY
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.pagesizes import LETTER, inch
-from reportlab.graphics.shapes import Line, LineShape, Drawing
-from reportlab.lib.colors import Color
-import datetime
-import random
+
 
 class FooterCanvas(canvas.Canvas):
 
